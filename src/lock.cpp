@@ -132,6 +132,26 @@ void psf::lock::decrypt_file(
     return;
   }
 
+  // Check the size to see if the salt and nonce size can fit inside
+  // the file
+  input_file.seekg(0, std::ios::end);
+  std::streampos file_size = input_file.tellg();
+  input_file.seekg(0, std::ios::beg);
+
+  if (file_size == -1) {
+    std::cerr << "[" << file_path << "] error getting file size"
+              << std::endl;
+    return;
+  } else if (file_size == 0) {
+    std::cerr << "[" << file_path << "] ignoring empty file"
+              << std::endl;
+    return;
+  } else if (file_size < salt_size + nonce_size) {
+    std::cerr << "[" << file_path
+              << "] file size mismatch (misfit header)" << std::endl;
+    return;
+  }
+
   // Read the salt and nonce from the beginning of the input file
   input_file.read(reinterpret_cast<char*>(salt), salt_size);
   input_file.read(reinterpret_cast<char*>(nonce), nonce_size);
@@ -155,11 +175,7 @@ void psf::lock::decrypt_file(
   // collision or loss of data
   auto temp_path = output_path + ".lock";
   if (fs::exists(temp_path)) {
-    std::cerr << "[" << file_path
-              << "] unable to lock unless the .lock version of this "
-                 "file is deleted. ("
-              << temp_path << ")" << std::endl;
-    return;
+    fs::remove(temp_path);
   }
 
   std::ofstream temp_file(temp_path, std::ios::binary);
@@ -177,6 +193,8 @@ void psf::lock::decrypt_file(
     size_t bytes_read = static_cast<size_t>(input_file.gcount());
     unsigned char plaintext[bytes_read - crypto_secretbox_MACBYTES];
 
+    // TODO: There is something with large files that is making this
+    // fail. Check this -->
     if (crypto_secretbox_open_easy(
             plaintext, buffer, bytes_read, nonce, key
         ) != 0) {
