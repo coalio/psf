@@ -11,7 +11,7 @@ auto arg::parse(int argc, char** argv) -> arg_list {
       std::string name = arg.substr(1, arg.length() - 1);
 
       if (!arg::is_valid_option(name)) {
-        throw new std::runtime_error(
+        throw std::runtime_error(
             (name + " is not a valid option").c_str()
         );
       }

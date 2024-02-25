@@ -61,17 +61,20 @@ auto main(int argc, char* argv[]) -> int {
   } catch (std::runtime_error e) {
     std::cout << e.what() << std::endl;
     help_message();
-    exit(1);
+
+    return 1;
   }
 
   if (args.empty()) {
     help_message();
-    exit(1);
+
+    return 1;
   }
 
   if (arg::has(args, "h")) {
     help_message();
-    exit(1);
+
+    return 1;
   }
 
   if (arg::has(args, "l")) {
@@ -79,7 +82,8 @@ auto main(int argc, char* argv[]) -> int {
 
     if (pwd.empty() || pwd.at(0) == 1) {
       std::cerr << "no password provided, quitting" << std::endl;
-      exit(1);
+
+      return 1;
     }
 
     for (const auto& entry :
@@ -101,7 +105,8 @@ auto main(int argc, char* argv[]) -> int {
 
     if (pwd.empty() || pwd.at(0) == 1) {
       std::cerr << "no password provided, quitting" << std::endl;
-      exit(1);
+
+      return 1;
     }
 
     for (const auto& entry :

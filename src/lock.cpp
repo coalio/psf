@@ -1,4 +1,5 @@
 #include "lock.h"
+#include "secretstream.h"
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
@@ -66,33 +67,26 @@ void psf::lock::encrypt_file(
     return;
   }
 
-  temp_file.write(reinterpret_cast<char*>(salt), salt_size);
+  // Write nonce to output file
   temp_file.write(reinterpret_cast<char*>(nonce), nonce_size);
 
-  unsigned char buffer[1024];
+  // The source buffer
+  unsigned char buffer[BUFFSIZE];
+  // The output buffer
+  psf::sxpstream ssbox(key);
+
+  // Write header to output file
+  temp_file.write(
+      reinterpret_cast<char*>(ssbox.header),
+      psf::sxpstream::HEADERBYTES
+  );
 
   while (!input_file.eof()) {
     input_file.read(reinterpret_cast<char*>(buffer), sizeof(buffer));
     size_t bytes_read = static_cast<size_t>(input_file.gcount());
-    unsigned char ciphertext[bytes_read + crypto_secretbox_MACBYTES];
 
-    // Encrypt the buffer
-    if (crypto_secretbox_easy(
-            ciphertext, buffer, bytes_read, nonce, key
-        ) != 0) {
-      std::cerr << "[" << file_path << "] failed" << std::endl;
-
-      // Close the temp file and remove it
-      temp_file.close();
-      fs::remove(temp_path);
-
-      return;
-    }
-
-    // Write the ciphertext to the temp file
-    temp_file.write(
-        reinterpret_cast<char*>(ciphertext), sizeof(ciphertext)
-    );
+    // Put and encrypt
+    ssbox << buffer;
   }
 
   input_file.close();
@@ -193,8 +187,6 @@ void psf::lock::decrypt_file(
     size_t bytes_read = static_cast<size_t>(input_file.gcount());
     unsigned char plaintext[bytes_read - crypto_secretbox_MACBYTES];
 
-    // TODO: There is something with large files that is making this
-    // fail. Check this -->
     if (crypto_secretbox_open_easy(
             plaintext, buffer, bytes_read, nonce, key
         ) != 0) {

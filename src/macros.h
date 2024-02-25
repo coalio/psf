@@ -12,6 +12,9 @@
 // The salt size
 #define SALT_SIZE crypto_pwhash_SALTBYTES
 
+// The buffer size
+#define BUFFSIZE 4096
+
 // The defined options, this is later reconstructed to a vector when
 // required
 #define VALID_OPTIONS                                                \
