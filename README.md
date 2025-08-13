@@ -6,7 +6,7 @@ It watches for open file descriptors in the folder. When the folder contents are
 
 ## Getting started
 
-`psf` depends in [libsodium](https://github.com/jedisct1/libsodium), a cryptography library that powers the infrastructure lying under `psf`.
+`psf` depends in [libsodium](https://github.com/jedisct1/libsodium), a cryptography library that powers `psf`.
 
 Common procedure (assuming all dependencies were fulfilled):
 
